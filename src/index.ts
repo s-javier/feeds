@@ -160,6 +160,10 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
     for (let i = 0; i < feed.items.length; i += 1) {
       const item: any = feed.items[i]
 
+      if (item.title === 'Lo que debes saber a esta hora de la tarde') {
+        continue
+      }
+
       let query
       try {
         query = await sql`
@@ -189,6 +193,11 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
       } catch (e: any) {
         console.log(e)
         console.log('--- Hubo un error con Anthropic.')
+        continue
+      }
+
+      // @ts-ignore
+      if (ai.content[0].text.includes('"isPositive": null')) {
         continue
       }
 
