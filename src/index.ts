@@ -155,8 +155,9 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
       items: t13.items,
     },
   ]
-  let positiveNewsCounter = 0
   let reviewedNewsCounter = 0
+  let aIReviewedNewsCounter = 0
+  let positiveNewsCounter = 0
   for (const feed of feeds) {
     console.log(`>>> Fuente: ${feed.title}. Total: ${feed.items.length}`)
     reviewedNewsCounter += feed.items.length
@@ -164,7 +165,12 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
       const item: any = feed.items[i]
 
       if (
-        ['Lo que debes saber a esta hora de la tarde', 'Volver la vista atrás'].includes(item.title)
+        [
+          'Lo que debes saber a esta hora de la tarde',
+          'Volver la vista atrás',
+          'Resumen informativo',
+          'Rating del',
+        ].some((phrase) => item.title.toLowerCase().includes(phrase.toLowerCase()))
       ) {
         continue
       }
@@ -195,6 +201,7 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
             },
           ],
         })
+        aIReviewedNewsCounter += 1
       } catch (e: any) {
         console.log(e)
         console.log('---\n--- Hubo un error con Anthropic.\n---')
@@ -245,6 +252,7 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
     }
   }
   console.log('Noticias revisadas:', reviewedNewsCounter)
+  console.log('Noticias revisadas con IA:', aIReviewedNewsCounter)
   console.log('Noticias positivas agregadas:', positiveNewsCounter)
 })
 
