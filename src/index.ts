@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import rssParser from 'rss-parser'
+// @ts-ignore
 import { CronJob } from 'cron'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -154,13 +155,17 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
       items: t13.items,
     },
   ]
-  let count = 0
+  let positiveNewsCounter = 0
+  let reviewedNewsCounter = 0
   for (const feed of feeds) {
-    console.log(`-> Fuente: ${feed.title}. Total: ${feed.items.length}`)
+    console.log(`>>> Fuente: ${feed.title}. Total: ${feed.items.length}`)
+    reviewedNewsCounter += feed.items.length
     for (let i = 0; i < feed.items.length; i += 1) {
       const item: any = feed.items[i]
 
-      if (item.title === 'Lo que debes saber a esta hora de la tarde') {
+      if (
+        ['Lo que debes saber a esta hora de la tarde', 'Volver la vista atrás'].includes(item.title)
+      ) {
         continue
       }
 
@@ -171,7 +176,7 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
         `
       } catch (e: any) {
         console.log(e)
-        console.log('--- Hubo un error al consultar en DB.')
+        console.log('---\n--- Hubo un error al consultar en DB.\n---')
         continue
       }
       if (query.length > 0) {
@@ -192,7 +197,7 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
         })
       } catch (e: any) {
         console.log(e)
-        console.log('--- Hubo un error con Anthropic.')
+        console.log('---\n--- Hubo un error con Anthropic.\n---')
         continue
       }
 
@@ -209,14 +214,14 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
         console.log(e)
         // @ts-ignore
         console.log(ai.content[0].text)
-        console.log('--- Hubo un error con la respuesta de Anthropic.')
+        console.log('---\n--- Hubo un error con la respuesta de Anthropic.\n---')
         continue
       }
       if (!aiResult.isPositive) {
         continue
       }
 
-      console.log(item.title)
+      console.log('*', item.title)
 
       try {
         await sql`
@@ -231,15 +236,16 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
               ${aiResult.categories}, ${item.content ?? ''}, ${new Date().toISOString()}
             )
         `
-        count += 1
+        positiveNewsCounter += 1
       } catch (e: any) {
         console.log(e)
-        console.log('--- Hubo un error al insertar en DB.')
+        console.log('---\n--- Hubo un error al insertar en DB.\n---')
         continue
       }
     }
   }
-  console.log('Noticias positivas agregadas:', count)
+  console.log('Noticias revisadas:', reviewedNewsCounter)
+  console.log('Noticias positivas agregadas:', positiveNewsCounter)
 })
 
 // init()
