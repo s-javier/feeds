@@ -118,10 +118,10 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
       title: 'La Nación',
       items: laNacion.items,
     },
-    {
-      title: 'La Tercera',
-      items: laTercera.items,
-    },
+    // {
+    //   title: 'La Tercera',
+    //   items: laTercera.items,
+    // },
     {
       title: 'Diario Financiero',
       items: df.items,
@@ -170,6 +170,7 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
           'Volver la vista atrás',
           'Resumen informativo',
           'Rating del',
+          'Nuevos sonidos',
         ].some((phrase) => item.title.toLowerCase().includes(phrase.toLowerCase()))
       ) {
         continue
@@ -197,7 +198,7 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
           messages: [
             {
               role: 'user',
-              content: `Considera la siguiente noticia "${item.title}". Responde en un JSON stringify con 2 atributos. "isPositive" es un boolean si la noticia es o no positiva. "categories" es un arreglo, en minúsculas un conjunto de categorías a las que pertenece la noticia`,
+              content: `Considera la siguiente noticia "${item.title}". Responde en un JSON stringify con 2 atributos. "isPositive" es un boolean si la noticia es positiva y está relacionada con personas. "categories" es un arreglo, en minúsculas un conjunto de categorías a las que pertenece la noticia`,
             },
           ],
         })
