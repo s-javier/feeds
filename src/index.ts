@@ -122,10 +122,10 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
     //   title: 'La Tercera',
     //   items: laTercera.items,
     // },
-    {
-      title: 'Diario Financiero',
-      items: df.items,
-    },
+    // {
+    //   title: 'Diario Financiero',
+    //   items: df.items,
+    // },
     {
       title: 'Chocale',
       items: chocale.items,
@@ -158,6 +158,9 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
   let reviewedNewsCounter = 0
   let aIReviewedNewsCounter = 0
   let positiveNewsCounter = 0
+  let skippedNewsCounter = 0
+  let isPositiveNullCounter = 0
+  let newsAlreadyInDb = 0
   for (const feed of feeds) {
     console.log(`>>> Fuente: ${feed.title}. Total: ${feed.items.length}`)
     reviewedNewsCounter += feed.items.length
@@ -167,12 +170,16 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
       if (
         [
           'Lo que debes saber a esta hora de la tarde',
-          'Volver la vista atrás',
           'Resumen informativo',
           'Rating del',
           'Nuevos sonidos',
+          'Reporte Deportivo',
+          'Marcador Virtual',
         ].some((phrase) => item.title.toLowerCase().includes(phrase.toLowerCase()))
       ) {
+        console.log('---\n--- Noticia saltada.')
+        console.log(`Noticia: ${item.title}\n---`)
+        skippedNewsCounter += 1
         continue
       }
 
@@ -183,10 +190,12 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
         `
       } catch (e: any) {
         console.log(e)
-        console.log('---\n--- Hubo un error al consultar en DB.\n---')
+        console.log('---\n--- Hubo un error al consultar en DB.')
+        console.log(`Noticia: ${item.title}\n---`)
         continue
       }
       if (query.length > 0) {
+        newsAlreadyInDb += 1
         continue
       }
 
@@ -198,19 +207,23 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
           messages: [
             {
               role: 'user',
-              content: `Considera la siguiente noticia "${item.title}". Responde en un JSON stringify con 2 atributos. "isPositive" es un boolean si la noticia es positiva y está relacionada con personas. "categories" es un arreglo, en minúsculas un conjunto de categorías a las que pertenece la noticia`,
+              content: `Considera la siguiente noticia "${item.title}". Responde en un JSON stringify con 2 atributos. "isPositive" es un boolean si la noticia es positiva y está relacionada con humanos. "categories" es un arreglo, en minúsculas un conjunto de categorías a las que pertenece la noticia`,
             },
           ],
         })
         aIReviewedNewsCounter += 1
       } catch (e: any) {
         console.log(e)
-        console.log('---\n--- Hubo un error con Anthropic.\n---')
+        console.log('---\n--- Hubo un error con Anthropic.')
+        console.log(`Noticia: ${item.title}\n---`)
         continue
       }
 
       // @ts-ignore
       if (ai.content[0].text.includes('"isPositive": null')) {
+        console.log('---\n--- La noticia en isPositive es nula.')
+        console.log(`Noticia: ${item.title}\n---`)
+        isPositiveNullCounter += 1
         continue
       }
 
@@ -222,7 +235,8 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
         console.log(e)
         // @ts-ignore
         console.log(ai.content[0].text)
-        console.log('---\n--- Hubo un error con la respuesta de Anthropic.\n---')
+        console.log('---\n--- Hubo un error con la respuesta de Anthropic.')
+        console.log(`Noticia: ${item.title}\n---`)
         continue
       }
       if (!aiResult.isPositive) {
@@ -252,9 +266,12 @@ const job = new CronJob((process.env.CRON_SCHEDULE as string) ?? '22 * * * *', a
       }
     }
   }
-  console.log('Noticias revisadas:', reviewedNewsCounter)
+  console.log('Noticias totales:', reviewedNewsCounter)
+  console.log('Noticias saltadas según texto:', skippedNewsCounter)
+  console.log('Noticias ya en DB:', newsAlreadyInDb)
   console.log('Noticias revisadas con IA:', aIReviewedNewsCounter)
   console.log('Noticias positivas agregadas:', positiveNewsCounter)
+  console.log('Noticias con isPositive null:', isPositiveNullCounter)
 })
 
 // init()
