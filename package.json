@@ -21,7 +21,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "0.56.0",
     "axios": "1.10.0",
-    "cron": "4.3.1",
+    "cron": "4.3.2",
     "dotenv": "17.2.0",
     "postgres": "3.4.7",
     "rss-parser": "3.13.0",
