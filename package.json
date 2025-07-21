@@ -13,13 +13,13 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "@types/node": "24.0.14",
+    "@types/node": "24.0.15",
     "prettier": "3.6.2",
     "tsx": "4.20.3",
     "typescript": "5.8.3"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "0.56.0",
+    "@anthropic-ai/sdk": "0.57.0",
     "axios": "1.10.0",
     "cron": "4.3.2",
     "dotenv": "17.2.0",
